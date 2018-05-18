@@ -1,69 +1,72 @@
-package mx.fei.datasource;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mx.fei.DS;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+
 import java.io.IOException;
-import java.sql.*;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ *
+ * @author jethr
+ */
 public class DataBase {
-
+    
     public static Connection connection;
+    private Statement statement;
     public static DataBase database;
-
-    public DataBase(){
-
+    
+    private DataBase() {
     }
-
-    static Properties prop = new Properties();
-
-    private static void establecerConexion(){
+    
+    private static void setConnection(){
+        Configuracion configuracion= new Configuracion();
+        Properties configuracionProperties = null;
         try {
-            prop.load(new FileReader("configuracion.properties"));
-        } catch (IOException e) {
-            Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, e);
-        }
-        String url = "jdbc:mysql//" + prop.getProperty("servidor") + "/";
-        String usuario = prop.getProperty("usuario");
-        String contraseña = prop.getProperty("contraseña");
-        String bd = prop.getProperty("bd");
-        try {
-            connection = DriverManager.getConnection(url+bd, usuario, contraseña);
-        } catch (SQLException e) {
-            Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, e);
-        } finally{
-            cerrarConexion();
-        }
+            configuracionProperties = configuracion.loadConfiguration();
+             String url= "jdbc:mysql://"+configuracionProperties.getProperty("server")+"/";
+            String databaseName = configuracionProperties.getProperty("database");
+            String userName = configuracionProperties.getProperty("username");
+            String password = configuracionProperties.getProperty("password");
+       
+            connection = (Connection)DriverManager.getConnection(url+databaseName,userName,password);
+        } catch (IOException | SQLException ex) {
+            java.util.logging.Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
+        }     
     }
-
-    public static DataBase obtenerConexion(){
-        if(database == null){
-            database = new DataBase();
-        }
-        establecerConexion();
-        return database;
+    
+    public static Connection getDataBaseConnection() {
+        setConnection();
+        return connection;
+ 
     }
-
-    public static void cerrarConexion(){
-        if(connection != null){
-            try{
+    
+    public static void closeConnection(){
+        if(connection!=null){
+            try {
                 if(!connection.isClosed()){
                     connection.close();
                 }
-            }catch(SQLException ex){
-                java.util.logging.Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SQLException ex) {
+                Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
-
-    public static ResultSet executeQuery(PreparedStatement statement) throws SQLException {
-        return statement.executeQuery();
+    
+    public ResultSet executeQuery(String query) throws SQLException{
+        statement = connection.createStatement();
+        ResultSet result =statement.executeQuery(query);
+        return result;        
     }
-
-    public static Boolean executeUpdate(PreparedStatement statement) throws SQLException {
-        return statement.executeUpdate() == 0;
-    }
+ 
 }
