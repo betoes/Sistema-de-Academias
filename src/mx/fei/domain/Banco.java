@@ -14,7 +14,7 @@ import java.util.Random;
 public class Banco {
     
     public static boolean realizarPagoTarjeta(TarjetaCredito credit, double montoPago){
-        double creditoTarjeta = obtenerNumeroEnRango(200, montoPago);
+        double creditoTarjeta = obtenerNumeroEnRango(200, montoPago + 2000);
         
         return creditoTarjeta > montoPago;
     }
